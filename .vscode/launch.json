@@ -17,6 +17,23 @@
             "envFile": "${workspaceFolder}/monitoring_service/.env",
             "jinja": true,
             "justMyCode": true
+        },
+        {
+            "name": "Debug read_and_chunk_service",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "uvicorn",
+            "cwd": "${workspaceFolder}/read_and_chunk_service",
+            "args": [
+                "app.main:app",
+                "--host",
+                "127.0.0.1",
+                "--port",
+                "8001"
+            ],
+            "envFile": "${workspaceFolder}/read_and_chunk_service/.env",
+            "jinja": true,
+            "justMyCode": true
         }
     ]
 }
