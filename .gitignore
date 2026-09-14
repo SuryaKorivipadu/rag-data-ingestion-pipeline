@@ -149,6 +149,11 @@ activemq-data/
 
 # Environments
 .envrc
+.env
+read_and_chunk_service/.env
+embed_service/.env
+ingestion_service/.env
+monitoring_service/.env
 .venv
 env/
 venv/
