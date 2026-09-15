@@ -31,7 +31,7 @@ def _log_level() -> int:
     return getattr(logging, os.getenv("LOG_LEVEL", "INFO").upper(), logging.INFO)
 
 
-def get_logger(name: str = "read_and_chunk") -> logging.Logger:
+def get_logger(name: str = "chunk") -> logging.Logger:
     """Return a logger with console and rotating-file handlers."""
     logger = logging.getLogger(name)
     logger.setLevel(_log_level())

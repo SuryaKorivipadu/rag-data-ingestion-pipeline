@@ -1,4 +1,4 @@
-"""Database-backed text document chunking."""
+"""Database-backed text document reading."""
 
 import json
 import os
@@ -8,10 +8,10 @@ from typing import Any
 
 import psycopg2
 from dotenv import load_dotenv
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 from psycopg2.extensions import connection as PostgreSQLConnection
 
 from app.utils.logging import get_logger
+from app.utils.pdf_reader import get_text
 
 
 load_dotenv(Path(__file__).resolve().parents[1] / ".env", override=False)
@@ -22,11 +22,7 @@ POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
 POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
 POSTGRES_USER = os.getenv("POSTGRES_USER", "")
 POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "")
-CHUNKS_OUTPUT_DIR = Path(
-    os.getenv("CHUNKS_OUTPUT_DIR", r"C:\Users\Surya\OneDrive\data\chunks")
-)
-CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "1000"))
-CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "200"))
+READ_OUTPUT_DIR = Path(os.getenv("READ_OUTPUT_DIR", ""))
 
 
 def get_connection(database: str = DATABASE_NAME) -> PostgreSQLConnection:
@@ -94,58 +90,28 @@ def _update_document(
             raise
 
 
-def _write_chunks(document: dict[str, Any], chunks: list[str]) -> Path:
-    """Write chunk data to a UTF-8 JSON file and return its path."""
-    CHUNKS_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    output_path = CHUNKS_OUTPUT_DIR / f"{document['id']}_{document['file_hash']}.json"
-    payload = {
-        "document_id": document["id"],
-        "file_name": document["file_name"],
-        "file_path": document["file_path"],
-        "chunks": [
-            {"chunk_id": index, "text": text}
-            for index, text in enumerate(chunks)
-        ],
-    }
-    with open(output_path, "w", encoding="utf-8") as output_file:
-        json.dump(payload, output_file, ensure_ascii=False, indent=2)
-    return output_path
-
-
 def process_next_document(file_id: int | None = None) -> dict[str, Any] | None:
-    """Chunk one new text document and mark it as chunked."""
-    if CHUNK_SIZE <= 0 or CHUNK_OVERLAP < 0 or CHUNK_OVERLAP >= CHUNK_SIZE:
-        raise ValueError("CHUNK_SIZE must be positive and CHUNK_OVERLAP must be smaller")
-
+    """Read one new document and mark it as read."""
     document = _get_document(file_id)
+    file_name = os.path.basename(document["file_path"]) if document else "unknown"
     if document is None:
         return None
-
-    source_path = Path(document["file_path"])
-    if source_path.suffix.lower() != ".txt":
-        raise ValueError(f"Document {document['id']} is not a .txt file")
-    if not source_path.is_file():
-        raise FileNotFoundError(f"Document file does not exist: {source_path}")
-
+    
     LOGGER.info("Reading document id=%s", document["id"])
-    text = source_path.read_text(encoding="utf-8")
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size=CHUNK_SIZE,
-        chunk_overlap=CHUNK_OVERLAP,
-    )
-    chunks = splitter.split_text(text)
-    output_path = _write_chunks(document, chunks)
-    _update_document(document["id"], "chunked")
+    text = get_text(document["file_path"])
+    READ_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    output_path = READ_OUTPUT_DIR / f"{document['id']}_{file_name}.txt"
+    with open(output_path, "w", encoding="utf-8") as output_file:
+        output_file.write(text)
+    _update_document(document["id"], "read")
     LOGGER.info(
-        "Chunked document id=%s chunks=%s output=%s",
+        "Read document id=%s output=%s",
         document["id"],
-        len(chunks),
         output_path,
     )
     return {
         "document_id": document["id"],
         "file_name": document["file_name"],
-        "chunk_count": len(chunks),
         "output_path": str(output_path),
-        "status": "chunked",
+        "status": "read",
     }

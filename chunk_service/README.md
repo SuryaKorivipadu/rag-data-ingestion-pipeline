@@ -1,4 +1,4 @@
-# Read and chunk service
+# Chunk service
 
 FastAPI service for reading documents and splitting them into chunks for the RAG pipeline.
 
@@ -6,7 +6,7 @@ The service selects a document with `status = 'new'` from the PostgreSQL `docume
 
 ## Configuration
 
-Create `read_and_chunk_service/.env` locally:
+Create `chunk_service/.env` locally:
 
 ```env
 POSTGRES_HOST=localhost

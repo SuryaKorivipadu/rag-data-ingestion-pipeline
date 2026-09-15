@@ -1,12 +1,12 @@
-# Read and chunk service
+# Read service
 
-FastAPI service for reading documents and splitting them into chunks for the RAG pipeline.
+FastAPI service for reading documents for the RAG pipeline.
 
-The service selects a document with `status = 'new'` from the PostgreSQL `documents` table, reads `.txt` files, writes JSON chunks, and updates the document status to `chunked`.
+The service selects a document with `status = 'new'` from the PostgreSQL `documents` table, reads `.txt` files,+ and updates the document status to `read`.
 
 ## Configuration
 
-Create `read_and_chunk_service/.env` locally:
+Create `read_service/.env` locally:
 
 ```env
 POSTGRES_HOST=localhost
@@ -42,4 +42,4 @@ Process a specific document by database ID:
 Invoke-RestMethod -Method Post "http://127.0.0.1:8000/documents/chunk?file_id=1"
 ```
 
-Chunks are written as `<document_id>_<file_hash>.json` in `CHUNKS_OUTPUT_DIR`.
+File text is written as `<document_id>_<document_name>.txt` in `READ_OUTPUT_DIR`.

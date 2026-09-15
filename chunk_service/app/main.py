@@ -6,7 +6,7 @@ from psycopg2 import Error as PostgreSQLError
 from app.chunking import process_next_document
 from app.utils.logging import get_logger
 
-app = FastAPI(title="Read and Chunk Service")
+app = FastAPI(title="Chunk Service")
 LOGGER = get_logger(__name__)
 
 

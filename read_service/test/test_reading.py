@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from app import chunking
+from read_service.app import reading
 
 
 def test_process_next_document_chunks_txt_file(tmp_path: Path, monkeypatch) -> None:
@@ -14,19 +14,17 @@ def test_process_next_document_chunks_txt_file(tmp_path: Path, monkeypatch) -> N
     }
     statuses: list[tuple[int, str]] = []
 
-    monkeypatch.setattr(chunking, "_get_document", lambda file_id: document)
+    monkeypatch.setattr(reading, "_get_document", lambda file_id: document)
     monkeypatch.setattr(
-        chunking,
+        reading,
         "_update_document",
         lambda document_id, status, error_message=None: statuses.append(
             (document_id, status)
         ),
     )
-    monkeypatch.setattr(chunking, "CHUNKS_OUTPUT_DIR", tmp_path / "chunks")
-    monkeypatch.setattr(chunking, "CHUNK_SIZE", 20)
-    monkeypatch.setattr(chunking, "CHUNK_OVERLAP", 0)
+    monkeypatch.setattr(reading, "READ_OUTPUT_DIR", tmp_path / "read")
 
-    result = chunking.process_next_document()
+    result = reading.process_next_document()
 
     assert result is not None
     assert result["document_id"] == 7
@@ -37,6 +35,6 @@ def test_process_next_document_chunks_txt_file(tmp_path: Path, monkeypatch) -> N
 
 
 def test_process_next_document_returns_none_when_no_new_file(monkeypatch) -> None:
-    monkeypatch.setattr(chunking, "_get_document", lambda file_id: None)
+    monkeypatch.setattr(reading, "_get_document", lambda file_id: None)
 
-    assert chunking.process_next_document() is None
+    assert reading.process_next_document() is None

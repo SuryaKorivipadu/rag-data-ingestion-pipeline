@@ -12,26 +12,28 @@
                 "--host",
                 "127.0.0.1",
                 "--port",
-                "8000"
+                "8000",
+                "--reload"
             ],
             "envFile": "${workspaceFolder}/monitoring_service/.env",
             "jinja": true,
             "justMyCode": true
         },
         {
-            "name": "Debug read_and_chunk_service",
+            "name": "Debug read_service",
             "type": "debugpy",
             "request": "launch",
             "module": "uvicorn",
-            "cwd": "${workspaceFolder}/read_and_chunk_service",
+            "cwd": "${workspaceFolder}/read_service",
             "args": [
                 "app.main:app",
                 "--host",
                 "127.0.0.1",
                 "--port",
-                "8001"
+                "8001",
+                "--reload"
             ],
-            "envFile": "${workspaceFolder}/read_and_chunk_service/.env",
+            "envFile": "${workspaceFolder}/read_service/.env",
             "jinja": true,
             "justMyCode": true
         }
