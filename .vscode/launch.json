@@ -36,6 +36,24 @@
             "envFile": "${workspaceFolder}/read_service/.env",
             "jinja": true,
             "justMyCode": true
+        },
+        {
+            "name": "Debug chunk_service",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "uvicorn",
+            "cwd": "${workspaceFolder}/chunk_service",
+            "args": [
+                "app.main:app",
+                "--host",
+                "127.0.0.1",
+                "--port",
+                "8002",
+                "--reload"
+            ],
+            "envFile": "${workspaceFolder}/chunk_service/.env",
+            "jinja": true,
+            "justMyCode": true
         }
     ]
 }

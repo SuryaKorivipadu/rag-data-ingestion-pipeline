@@ -25,6 +25,9 @@ POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "")
 CHUNKS_OUTPUT_DIR = Path(
     os.getenv("CHUNKS_OUTPUT_DIR", r"C:\Users\Surya\OneDrive\data\chunks")
 )
+READ_OUTPUT_DIR = Path(
+    os.getenv("READ_OUTPUT_DIR", r"C:\Users\Surya\OneDrive\data\read")
+)
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "1000"))
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "200"))
 
@@ -53,7 +56,7 @@ def _get_document(file_id: int | None) -> dict[str, Any] | None:
     query = """
         SELECT id, file_path, file_name, file_hash
         FROM documents
-        WHERE status = 'new'
+        WHERE status = 'read'
           AND (%s IS NULL OR id = %s)
         ORDER BY discovered_at, id
         LIMIT 1
@@ -97,7 +100,7 @@ def _update_document(
 def _write_chunks(document: dict[str, Any], chunks: list[str]) -> Path:
     """Write chunk data to a UTF-8 JSON file and return its path."""
     CHUNKS_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    output_path = CHUNKS_OUTPUT_DIR / f"{document['id']}_{document['file_hash']}.json"
+    output_path = CHUNKS_OUTPUT_DIR / f"{document['id']}_{document['file_name']}.json"
     payload = {
         "document_id": document["id"],
         "file_name": document["file_name"],
@@ -122,13 +125,15 @@ def process_next_document(file_id: int | None = None) -> dict[str, Any] | None:
         return None
 
     source_path = Path(document["file_path"])
-    if source_path.suffix.lower() != ".txt":
+    file_path = os.path.join(READ_OUTPUT_DIR, f"{document['id']}_{document['file_name']}.txt")
+    file_path = Path(file_path)
+    if file_path.suffix.lower() != ".txt":
         raise ValueError(f"Document {document['id']} is not a .txt file")
     if not source_path.is_file():
         raise FileNotFoundError(f"Document file does not exist: {source_path}")
 
     LOGGER.info("Reading document id=%s", document["id"])
-    text = source_path.read_text(encoding="utf-8")
+    text = file_path.read_text(encoding="utf-8")
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=CHUNK_SIZE,
         chunk_overlap=CHUNK_OVERLAP,
