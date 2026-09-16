@@ -1,6 +1,4 @@
 """Database-backed text document reading."""
-
-import json
 import os
 from contextlib import closing
 from pathlib import Path
@@ -98,17 +96,15 @@ def process_next_document(file_id: int | None = None) -> dict[str, Any] | None:
         return None
     
     LOGGER.info("Reading document id=%s", document["id"])
-    text = get_text(document["file_path"])
     READ_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    PDF_IMAGE_OUTPUT_DIR = os.path.join(READ_OUTPUT_DIR, "pdf_images",f"{document['id']}_{file_name}")
+    os.makedirs(PDF_IMAGE_OUTPUT_DIR, exist_ok=True)
+    text = get_text(document["file_path"], PDF_IMAGE_OUTPUT_DIR)
     output_path = READ_OUTPUT_DIR / f"{document['id']}_{file_name}.txt"
     with open(output_path, "w", encoding="utf-8") as output_file:
         output_file.write(text)
     _update_document(document["id"], "read")
-    LOGGER.info(
-        "Read document id=%s output=%s",
-        document["id"],
-        output_path,
-    )
+    LOGGER.info("Read document id=%s output=%s", document["id"], output_path)
     return {
         "document_id": document["id"],
         "file_name": document["file_name"],
