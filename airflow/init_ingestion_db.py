@@ -85,8 +85,17 @@ def create_documents_table() -> None:
             file_name TEXT NOT NULL,
             file_hash TEXT NOT NULL UNIQUE,
             status TEXT NOT NULL DEFAULT 'new',
+            images_status TEXT NOT NULL DEFAULT 'not_started',
             CONSTRAINT documents_status_check
-                CHECK (status IN ('new', 'chunked', 'embedded', 'ingested')),
+                CHECK (status IN ('new', 'read', 'chunked', 'embedded', 'ingested')),
+            CONSTRAINT documents_images_status_check
+                CHECK (images_status IN (
+                    'not_started',
+                    'pending',
+                    'processing',
+                    'completed',
+                    'failed'
+                )),
             error_message TEXT,
             discovered_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -100,10 +109,41 @@ def create_documents_table() -> None:
     LOGGER.info("Ensured documents table exists in database %s", DATABASE_NAME)
 
 
+def create_image_jobs_table() -> None:
+    """Create the image processing table when it does not exist."""
+    create_table_sql = """
+        CREATE TABLE IF NOT EXISTS image_jobs (
+            id BIGSERIAL PRIMARY KEY,
+            document_id BIGINT NOT NULL REFERENCES documents(id),
+            image_name TEXT NOT NULL,
+            image_path TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'pending',
+            CONSTRAINT image_jobs_status_check
+                CHECK (status IN (
+                    'pending',
+                    'processing',
+                    'completed',
+                    'failed'
+                )),
+            description TEXT,
+            error_message TEXT,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            UNIQUE (document_id, image_name)
+        )
+    """
+    with connection(DATABASE_NAME) as database_connection:
+        with database_connection.cursor() as cursor:
+            cursor.execute(create_table_sql)
+        database_connection.commit()
+    LOGGER.info("Ensured image_jobs table exists in database %s", DATABASE_NAME)
+
+
 def main() -> None:
     """Create the application database and its document tracking table."""
     create_database()
     create_documents_table()
+    create_image_jobs_table()
 
 
 if __name__ == "__main__":
